@@ -3,3 +3,5 @@ dist/
 temp/
 *.log
 .env
+.DS_Store
+*.dmg
