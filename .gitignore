@@ -3,5 +3,6 @@ dist/
 temp/
 *.log
 .env
+electron-builder.env
 .DS_Store
 *.dmg
