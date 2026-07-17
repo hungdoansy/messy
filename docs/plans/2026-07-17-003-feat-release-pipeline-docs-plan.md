@@ -176,7 +176,7 @@ Directional signing-gate sketch (not final syntax):
 
 ## Implementation Units
 
-- [ ] **Unit 1: README overhaul (center header, credits up top, fork + Apple-Silicon clarity, requirements, structure)**
+- [x] **Unit 1: README overhaul (center header, credits up top, fork + Apple-Silicon clarity, requirements, structure)**
 
 **Goal:** Restructure and correct the README per R1–R5 without rewriting content that's already accurate.
 
@@ -204,7 +204,7 @@ Directional signing-gate sketch (not final syntax):
 
 ---
 
-- [ ] **Unit 2: Port the Gemini changelog script (de-nested to repo root)**
+- [x] **Unit 2: Port the Gemini changelog script (de-nested to repo root)**
 
 **Goal:** Bring nodl's `generate-changelog.mjs` into Messy, unchanged in behavior, adjusted for the flat repo (R9).
 
@@ -235,7 +235,7 @@ Directional signing-gate sketch (not final syntax):
 
 ---
 
-- [ ] **Unit 3: Apple-Silicon-only release workflow**
+- [x] **Unit 3: Apple-Silicon-only release workflow**
 
 **Goal:** A `workflow_dispatch` GitHub Actions workflow that builds Messy for arm64 on an Apple-Silicon runner, signs+notarizes with fallback, generates the changelog, and publishes a GitHub Release with the full `electron-updater` feed (R7, R8, R10).
 
@@ -270,7 +270,7 @@ Directional signing-gate sketch (not final syntax):
 
 ---
 
-- [ ] **Unit 4: package.json / signing config wiring for CI**
+- [x] **Unit 4: package.json / signing config wiring for CI**
 
 **Goal:** Ensure `package.json` build config and scripts support the conditional CI build without breaking local ad-hoc builds (R8).
 
@@ -294,7 +294,7 @@ Directional signing-gate sketch (not final syntax):
 
 ---
 
-- [ ] **Unit 5: GitHub "About" update + required-secrets documentation**
+- [x] **Unit 5: GitHub "About" update + required-secrets documentation**
 
 **Goal:** Refresh the repo's About (description + topics, website untouched) and document the secrets the pipeline needs (R6).
 
