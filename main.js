@@ -56,25 +56,68 @@ if (!gotTheLock) {
 //  is left intact as a rollback safety net. Best-effort: on any
 //  failure the app simply starts with default settings.
 // ============================================================
+const SETTINGS_FILE = "settings.json";
+
+// Disposable Chromium caches — large and regenerated on demand, so they are
+// skipped during migration to keep the startup copy small and fast.
+const MIGRATION_SKIP_DIRS = new Set([
+  "Cache",
+  "Code Cache",
+  "GPUCache",
+  "DawnCache",
+  "DawnGraphiteCache",
+  "DawnWebGPUCache",
+  "ShaderCache",
+  "GrShaderCache",
+  "Service Worker",
+  "component_crx_cache",
+  "blob_storage",
+]);
+
 function migrateLegacyUserData() {
   try {
     const appDataDir = app.getPath("appData");
     const newDir = app.getPath("userData");
 
-    // Already have data under the new name -> nothing to migrate.
-    if (fs.existsSync(path.join(newDir, "settings.json"))) return;
-    if (fs.existsSync(newDir) && fs.readdirSync(newDir).length > 0) return;
+    // settings.json is the single source of truth for "already migrated /
+    // already using the app under the new name". Keying on this marker (not
+    // "the dir has any content") avoids an incidental Chromium file
+    // suppressing a needed migration.
+    if (fs.existsSync(path.join(newDir, SETTINGS_FILE))) return;
 
-    // Prior product names this app has shipped under, newest first.
+    // Find the newest prior product dir that actually holds app settings.
     const LEGACY_NAMES = ["Mosx", "Messlỏ"];
+    let oldDir = null;
     for (const name of LEGACY_NAMES) {
-      const oldDir = path.join(appDataDir, name);
-      if (oldDir === newDir) continue;
-      if (fs.existsSync(oldDir) && fs.readdirSync(oldDir).length > 0) {
-        fs.cpSync(oldDir, newDir, { recursive: true, errorOnExist: false });
-        return;
+      const candidate = path.join(appDataDir, name);
+      if (candidate === newDir) continue;
+      if (fs.existsSync(path.join(candidate, SETTINGS_FILE))) {
+        oldDir = candidate;
+        break;
       }
     }
+    if (!oldDir) return;
+
+    // Copy everything except caches AND settings.json. settings.json is
+    // written last (below) so it becomes the atomic completion marker: if
+    // this copy throws partway, settings.json is absent and the migration
+    // retries on the next launch instead of being recorded as complete.
+    fs.cpSync(oldDir, newDir, {
+      recursive: true,
+      errorOnExist: false,
+      filter: (src) => {
+        const rel = path.relative(oldDir, src);
+        if (!rel) return true;
+        const top = rel.split(path.sep)[0];
+        if (MIGRATION_SKIP_DIRS.has(top)) return false;
+        return rel !== SETTINGS_FILE;
+      },
+    });
+    // Completion marker — copied only after the bulk copy succeeds.
+    fs.copyFileSync(
+      path.join(oldDir, SETTINGS_FILE),
+      path.join(newDir, SETTINGS_FILE),
+    );
   } catch {
     // Migration is best-effort; app still launches on defaults.
   }
@@ -176,56 +219,13 @@ function safeOpenExternal(url) {
 
 // ============================================================
 //  ORIGIN TRUST BOUNDARY
-//  Parse the URL and match the *parsed* hostname against an allowlist.
-//  Substring checks (url.includes("facebook.com")) are bypassable
-//  (evil.com/facebook.com, facebook.com.evil.com) and must not be used.
+//  The origin trust boundary lives in ./trust.js (pure, unit-tested):
+//    isTrusted(url)          — top-level navigation trust for the view
+//    isAllowedPopupHost(url) — popup-scoped OAuth login trust (separate)
+//  Substring checks (url.includes("facebook.com")) are bypassable and are
+//  never used; both helpers match the *parsed* hostname against an allowlist.
 // ============================================================
-const ALLOWED_HOSTS = new Set([
-  "facebook.com",
-  "www.facebook.com",
-  "m.facebook.com",
-  "messenger.com",
-  "www.messenger.com",
-]);
-
-function isTrusted(url) {
-  let u;
-  try {
-    u = new URL(String(url));
-  } catch {
-    return false;
-  }
-  if (u.protocol !== "https:") return false;
-  return (
-    ALLOWED_HOSTS.has(u.hostname) ||
-    u.hostname.endsWith(".facebook.com") ||
-    u.hostname.endsWith(".messenger.com") ||
-    u.hostname.endsWith(".fbcdn.net")
-  );
-}
-
-// ============================================================
-//  OAUTH LOGIN-POPUP TRUST (popup-scoped, NOT navigation-scoped)
-//  "Continue with Google/Apple" opens a login popup on a third-party
-//  origin. Those origins are trusted ONLY for opening/navigating that
-//  popup — never for top-level navigation of the Messenger view, which
-//  stays gated by isTrusted() above. Keep these two allowlists separate.
-// ============================================================
-function isAllowedPopupHost(url) {
-  let u;
-  try {
-    u = new URL(String(url));
-  } catch {
-    return false;
-  }
-  if (u.protocol !== "https:") return false;
-  return (
-    u.hostname === "google.com" ||
-    u.hostname.endsWith(".google.com") ||
-    u.hostname === "apple.com" ||
-    u.hostname.endsWith(".apple.com")
-  );
-}
+const { isTrusted, isAllowedPopupHost } = require("./trust");
 
 // IPC sender guard: sensitive channels are honored only from the trusted
 // local shell window. (The Messenger views have no preload/Node and cannot
@@ -639,10 +639,18 @@ function setupWebContents(contents, profileId) {
     wc.on("will-navigate", blockUntrustedPopupNav);
     wc.on("will-redirect", blockUntrustedPopupNav);
 
-    // When the OAuth flow returns to Facebook/Messenger, the login is done:
-    // refresh the parent Messenger view and close the popup.
+    // Treat the popup as an OAuth round-trip: only when it has actually
+    // visited a provider (Google/Apple) and THEN returns to Facebook/
+    // Messenger is the login complete. Guarding on visitedOAuth avoids
+    // closing the popup on an incidental Facebook navigation before the
+    // provider step. On completion, refresh the parent view and close it.
+    let visitedOAuth = false;
     wc.on("did-navigate", (event, url) => {
-      if (isTrusted(url)) {
+      if (isAllowedPopupHost(url)) {
+        visitedOAuth = true;
+        return;
+      }
+      if (visitedOAuth && isTrusted(url)) {
         try {
           contents.reload();
         } catch {}

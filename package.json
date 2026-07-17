@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --mac",
-    "build:dmg": "electron-builder --mac dmg"
+    "build:dmg": "electron-builder --mac dmg",
+    "test": "node --test"
   },
   "build": {
     "appId": "com.messy.app",
@@ -43,6 +44,7 @@
     },
     "files": [
       "main.js",
+      "trust.js",
       "preload.js",
       "renderer.js",
       "index.html",
