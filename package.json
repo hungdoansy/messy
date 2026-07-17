@@ -1,16 +1,17 @@
 {
-  "name": "mosx",
+  "name": "messy",
   "version": "1.3.0",
-  "description": "Ứng dụng Messenger Desktop đa tài khoản cho macOS - Electron + Chromium",
+  "description": "Multi-account Messenger desktop app for macOS - Electron + Chromium",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --mac",
-    "build:dmg": "electron-builder --mac dmg"
+    "build:dmg": "electron-builder --mac dmg",
+    "test": "node --test"
   },
   "build": {
-    "appId": "com.mosx.app",
-    "productName": "Mosx",
+    "appId": "com.messy.app",
+    "productName": "Messy",
     "directories": {
       "output": "dist"
     },
@@ -25,7 +26,7 @@
       ],
       "icon": "icon.icns",
       "category": "public.app-category.social-networking",
-      "artifactName": "Mosx-${version}-arm64.${ext}",
+      "artifactName": "Messy-${version}-arm64.${ext}",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
@@ -43,6 +44,7 @@
     },
     "files": [
       "main.js",
+      "trust.js",
       "preload.js",
       "renderer.js",
       "index.html",
@@ -56,7 +58,7 @@
       {
         "provider": "github",
         "owner": "hungdoansy",
-        "repo": "mosx"
+        "repo": "messy"
       }
     ]
   },

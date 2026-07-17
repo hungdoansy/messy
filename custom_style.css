@@ -1,11 +1,11 @@
-/* CHÌA KHÓA DUY NHẤT: Override biến CSS Facebook */
+/* THE ONE KEY: override Facebook's CSS variables */
 :root,
 .__fb-light-mode,
 .__fb-dark-mode {
   --header-height: 0px !important;
 }
 
-/* ẨN banner + progressbar */
+/* Hide banner + progressbar */
 div[role="banner"] {
   display: none !important;
   height: 0 !important;
@@ -23,9 +23,9 @@ div[role="progressbar"].always-enable-animations {
   top: -9999px !important;
 }
 
-/* ẨN footer */
+/* Hide footer */
 footer { display: none !important; }
 
-/* Ẩn hoàn toàn scrollbar của trang */
+/* Fully hide the page scrollbar */
 ::-webkit-scrollbar { width: 0px !important; display: none !important; }
 html, body { scrollbar-width: none !important; }

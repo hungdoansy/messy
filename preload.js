@@ -1,9 +1,9 @@
 // ============================================================
-//  Mosx — Shell preload bridge
+//  Messy — Shell preload bridge
 //  Attached ONLY to the trusted local shell window (index.html).
 //  The untrusted Messenger views get NO preload (see main.js).
 //
-//  Exposes a minimal, channel-allowlisted API on window.mosx.
+//  Exposes a minimal, channel-allowlisted API on window.messy.
 //  Never exposes ipcRenderer, require, or Node APIs to the page.
 //  Secrets (e.g. the app-lock PIN hash) never cross this bridge:
 //  PIN hashing/verification happens in the main process.
@@ -21,7 +21,7 @@ function subscribe(channel, callback) {
   return () => ipcRenderer.removeListener(channel, listener);
 }
 
-contextBridge.exposeInMainWorld("mosx", {
+contextBridge.exposeInMainWorld("messy", {
   // ── Profile / view control ──
   switchProfile: (profile) => send("switch-profile", profile),
   setBrowserViewVisibility: (visible) =>

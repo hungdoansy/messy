@@ -1,5 +1,5 @@
 // ============================================
-// Mosx Landing Page — Interactions
+// Messy Landing Page — Interactions
 // ============================================
 
 // Smooth scroll for anchor links

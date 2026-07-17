@@ -1,29 +1,29 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mosx — Ứng dụng Messenger Desktop đa tài khoản cho macOS</title>
+    <title>Messy — Multi-account Messenger desktop app for macOS</title>
     <meta
       name="description"
-      content="Ứng dụng Messenger Desktop đa tài khoản cho macOS. Giao diện Dark Glass sang trọng, phím tắt toàn cục, chạy nền System Tray. Mã nguồn mở, miễn phí."
+      content="A multi-account Messenger desktop app for macOS. Elegant dark-glass UI, global shortcuts, runs in the background from the system tray. Open source and free."
     />
     <meta
       name="keywords"
-      content="Messenger, Desktop, macOS, Electron, Facebook Messenger, đa tài khoản"
+      content="Messenger, Desktop, macOS, Electron, Facebook Messenger, multi-account"
     />
     <meta name="author" content="hungdoansy" />
     <meta
       property="og:title"
-      content="Mosx — Messenger Desktop đa tài khoản cho macOS"
+      content="Messy — Multi-account Messenger desktop for macOS"
     />
     <meta
       property="og:description"
-      content="Ứng dụng Messenger Desktop đa tài khoản cho macOS. Giao diện tối sang trọng, mã nguồn mở."
+      content="A multi-account Messenger desktop app for macOS. Elegant dark UI, open source."
     />
     <meta
       property="og:image"
-      content="https://raw.githubusercontent.com/hungdoansy/mosx/main/icon.png"
+      content="https://raw.githubusercontent.com/hungdoansy/messy/main/icon.png"
     />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -39,7 +39,7 @@
     <link
       rel="icon"
       type="image/png"
-      href="https://raw.githubusercontent.com/hungdoansy/mosx/main/icon.png"
+      href="https://raw.githubusercontent.com/hungdoansy/messy/main/icon.png"
     />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -54,20 +54,20 @@
       <div class="nav-inner">
         <a href="#" class="logo">
           <img
-            src="https://raw.githubusercontent.com/hungdoansy/mosx/main/icon.png"
+            src="https://raw.githubusercontent.com/hungdoansy/messy/main/icon.png"
             alt="Messenger Logo"
           />
-          <span>Mosx</span>
+          <span>Messy</span>
         </a>
         <ul class="nav-links" id="navLinks">
-          <li><a href="#features">Tính năng</a></li>
-          <li><a href="#install">Cài đặt</a></li>
-          <li><a href="#shortcuts">Phím tắt</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#shortcuts">Shortcuts</a></li>
           <li><a href="#faq">FAQ</a></li>
         </ul>
         <div class="nav-actions">
           <a
-            href="https://github.com/hungdoansy/mosx"
+            href="https://github.com/hungdoansy/messy"
             class="btn-nav"
             target="_blank"
             rel="noopener"
@@ -88,47 +88,48 @@
           <div class="hero-content">
             <div class="version-pill">
               <span class="pulse-dot"></span>
-              v1.3.0 — Sửa lỗi session & Nút Đăng xuất
+              v1.3.0 — Session fix & Log out button
             </div>
             <h1>
               Messenger Desktop<br /><span class="gradient-text"
-                >cho macOS.</span
+                >for macOS.</span
               >
             </h1>
             <p class="hero-desc">
-              Ứng dụng Messenger đa tài khoản, giao diện Dark Glass sang trọng,
-              chạy nền trên System Tray. Mã nguồn mở, hoàn toàn miễn phí.
+              A multi-account Messenger app with an elegant dark-glass UI that
+              runs in the background from the system tray. Open source and
+              completely free.
             </p>
             <div class="hero-stats">
               <div class="stat">
                 <span class="stat-number">E2EE</span>
-                <span class="stat-label">Mã hóa</span>
+                <span class="stat-label">Encryption</span>
               </div>
               <div class="stat-divider"></div>
               <div class="stat">
-                <span class="stat-number">0₫</span>
-                <span class="stat-label">Chi phí</span>
+                <span class="stat-number">$0</span>
+                <span class="stat-label">Cost</span>
               </div>
               <div class="stat-divider"></div>
               <div class="stat">
                 <span class="stat-number">100%</span>
-                <span class="stat-label">Mã nguồn mở</span>
+                <span class="stat-label">Open source</span>
               </div>
             </div>
             <div class="cta-group">
               <a
-                href="https://github.com/hungdoansy/mosx/releases"
+                href="https://github.com/hungdoansy/messy/releases"
                 class="btn-primary"
               >
-                <i class="fas fa-download"></i> Tải về miễn phí
+                <i class="fas fa-download"></i> Download for free
               </a>
               <a
-                href="https://github.com/hungdoansy/mosx"
+                href="https://github.com/hungdoansy/messy"
                 class="btn-outline"
                 target="_blank"
                 rel="noopener"
               >
-                <i class="fab fa-github"></i> Xem mã nguồn
+                <i class="fab fa-github"></i> View source
               </a>
             </div>
           </div>
@@ -140,36 +141,36 @@
                   <span class="dot dot-yellow"></span>
                   <span class="dot dot-green"></span>
                 </div>
-                <span class="titlebar-text">Mosx</span>
+                <span class="titlebar-text">Messy</span>
               </div>
               <div class="preview-body messenger-preview">
                 <div class="msg-sidebar">
                   <div class="msg-contact active">
                     <div class="msg-avatar"><i class="fas fa-user"></i></div>
                     <div class="msg-info">
-                      <div class="msg-name">Nguyễn Văn A</div>
-                      <div class="msg-last">Bạn: Ok, hẹn gặp nhé! 👋</div>
+                      <div class="msg-name">Alex Johnson</div>
+                      <div class="msg-last">You: Ok, see you soon! 👋</div>
                     </div>
                     <div class="msg-badge">2</div>
                   </div>
                   <div class="msg-contact">
                     <div class="msg-avatar"><i class="fas fa-users"></i></div>
                     <div class="msg-info">
-                      <div class="msg-name">Nhóm Dự Án</div>
-                      <div class="msg-last">Trường: File đã gửi ✅</div>
+                      <div class="msg-name">Project Team</div>
+                      <div class="msg-last">Sam: File sent ✅</div>
                     </div>
                   </div>
                   <div class="msg-contact">
                     <div class="msg-avatar"><i class="fas fa-user"></i></div>
                     <div class="msg-info">
-                      <div class="msg-name">Lê Thị B</div>
-                      <div class="msg-last">Cảm ơn bạn nhiều!</div>
+                      <div class="msg-name">Taylor Brooks</div>
+                      <div class="msg-last">Thank you so much!</div>
                     </div>
                   </div>
                 </div>
               </div>
               <div class="preview-footer">
-                <i class="fas fa-lock"></i> Tin nhắn được mã hóa đầu cuối (E2EE)
+                <i class="fas fa-lock"></i> Messages are end-to-end encrypted (E2EE)
               </div>
             </div>
           </div>
@@ -181,104 +182,106 @@
     <section class="features" id="features">
       <div class="container">
         <div class="section-header">
-          <span class="section-badge">Tính năng</span>
-          <h2>Tại sao chọn Mosx?</h2>
+          <span class="section-badge">Features</span>
+          <h2>Why choose Messy?</h2>
           <p>
-            Trải nghiệm Messenger Desktop tốt nhất trên macOS, không quảng cáo,
-            không giới hạn.
+            The best Messenger desktop experience on macOS — no ads, no limits.
           </p>
         </div>
         <div class="feature-grid">
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-bug-slash"></i></div>
-            <h3>🔧 Sửa lỗi Session</h3>
+            <h3>🔧 Session fix</h3>
             <p>
-              Khắc phục lỗi đăng nhập tài khoản A nhưng hiển thị tài khoản B do
-              cookie/session bị trộn lẫn giữa các profile.
+              Fixes the bug where you log in as account A but see account B
+              because cookies/sessions were mixed between profiles.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">
               <i class="fas fa-right-from-bracket"></i>
             </div>
-            <h3>🔓 Đăng xuất & Đăng nhập lại</h3>
+            <h3>🔓 Log out & log in again</h3>
             <p>
-              Click phải vào nick → đăng xuất để xóa sạch session và đăng nhập
-              tài khoản khác ngay lập tức. Không cần xóa nick.
+              Right-click an account → log out to wipe its session and sign in
+              with a different account instantly. No need to delete the account.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-lock"></i></div>
-            <h3>🔒 Khoá ứng dụng (App Lock)</h3>
+            <h3>🔒 App Lock</h3>
             <p>
-              Bảo mật tin nhắn bằng mã PIN 4 số. Tự động khoá khi không hoạt
-              động (1–30 phút). Rate-limit sau 5 lần sai, hỗ trợ bàn phím.
+              Protect your messages with a 4-digit PIN. Auto-locks when idle
+              (1–30 minutes). Rate-limited after 5 wrong tries, keyboard
+              support.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-circle-dot"></i></div>
-            <h3>🔴 Badge riêng từng Nick</h3>
+            <h3>🔴 Per-account badge</h3>
             <p>
-              Mỗi nick hiển thị số tin nhắn chưa đọc riêng biệt trên sidebar.
-              Tổng hợp badge tự động lên taskbar overlay.
+              Each account shows its own unread count on the sidebar. The
+              combined badge is aggregated automatically onto the taskbar
+              overlay.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-columns"></i></div>
-            <h3>Giao diện 2 Sidebar</h3>
+            <h3>Dual-sidebar layout</h3>
             <p>
-              Sidebar trái chứa danh sách nick, sidebar phải chứa công cụ. Hỗ
-              trợ cuộn, kéo chuột khi nhiều tài khoản.
+              The left sidebar holds your accounts, the right sidebar holds the
+              tools. Supports scrolling and mouse-drag when you have many
+              accounts.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-compass"></i></div>
-            <h3>Điều hướng thông minh</h3>
+            <h3>Smart navigation</h3>
             <p>
-              Nút Trang chủ & Quay lại giúp bạn dễ dàng quay về tin nhắn khi lạc
-              ở trang cá nhân hay nhóm.
+              Home and Back buttons make it easy to return to your messages when
+              you wander off to a profile or group page.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-users"></i></div>
-            <h3>Đa Tài Khoản</h3>
+            <h3>Multi-account</h3>
             <p>
-              Đăng nhập nhiều nick Messenger cùng lúc. Mỗi nick được cô lập hoàn
-              toàn (Sandbox Partitions).
+              Log in to multiple Messenger accounts at once. Each one is fully
+              isolated (sandboxed partitions).
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
-            <h3>Bảo mật Quyền riêng tư</h3>
+            <h3>Privacy protection</h3>
             <p>
-              Chặn trạng thái "Đã xem" và "Đang nhập". Đọc tin nhắn hoàn toàn ẩn
-              danh như J2TEAM Security.
+              Block "Seen" and "Typing" states. Read your messages completely
+              anonymously, like J2TEAM Security.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">
               <i class="fas fa-cloud-arrow-down"></i>
             </div>
-            <h3>Cập nhật Tự động (OTA)</h3>
+            <h3>Automatic updates (OTA)</h3>
             <p>
-              Tải xuống và cài đặt trực tiếp bản cập nhật mới ngay trong phần
-              mềm chỉ với một click.
+              Download and install new updates directly inside the app with a
+              single click.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-palette"></i></div>
             <h3>Dark/Light Mode</h3>
             <p>
-              Giao diện tối sang trọng hoặc sáng nhẹ nhàng. Chuyển đổi nhanh
-              bằng nút trên thanh công cụ.
+              An elegant dark theme or a soft light theme. Switch quickly with
+              the toolbar button.
             </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon"><i class="fas fa-keyboard"></i></div>
-            <h3>Phím tắt & System Tray</h3>
+            <h3>Shortcuts & system tray</h3>
             <p>
-              <code>Ctrl+Shift+M</code> mở/ẩn Messenger. Thu nhỏ xuống khay hệ
-              thống, chạy nền liên tục.
+              <code>Ctrl+Shift+M</code> shows/hides Messenger. Minimize to the
+              system tray and keep running in the background.
             </p>
           </div>
         </div>
@@ -289,38 +292,38 @@
     <section class="install" id="install">
       <div class="container">
         <div class="section-header">
-          <span class="section-badge">Bắt đầu</span>
-          <h2>Cài đặt & Sử dụng</h2>
-          <p>Chỉ cần Node.js và vài lệnh đơn giản.</p>
+          <span class="section-badge">Get started</span>
+          <h2>Install & Use</h2>
+          <p>All you need is Node.js and a few simple commands.</p>
         </div>
         <div class="steps-grid">
           <div class="step-card">
             <div class="step-number">01</div>
-            <h3>Tải về</h3>
-            <p>Clone hoặc tải ZIP mã nguồn từ GitHub.</p>
+            <h3>Download</h3>
+            <p>Clone or download the source ZIP from GitHub.</p>
           </div>
           <div class="step-card">
             <div class="step-number">02</div>
-            <h3>Cài đặt</h3>
-            <p>Chạy <code>pnpm install</code> để cài thư viện.</p>
+            <h3>Install</h3>
+            <p>Run <code>pnpm install</code> to install dependencies.</p>
           </div>
           <div class="step-card">
             <div class="step-number">03</div>
-            <h3>Khởi chạy</h3>
-            <p>Chạy <code>pnpm start</code> để mở ứng dụng.</p>
+            <h3>Launch</h3>
+            <p>Run <code>pnpm start</code> to open the app.</p>
           </div>
           <div class="step-card">
             <div class="step-number">04</div>
-            <h3>Build .exe</h3>
-            <p>Chạy <code>pnpm run build</code> để tạo file .dmg cài đặt.</p>
+            <h3>Build .dmg</h3>
+            <p>Run <code>pnpm run build</code> to create an installable .dmg.</p>
           </div>
         </div>
         <div class="install-cta">
           <a
-            href="https://github.com/hungdoansy/mosx/releases"
+            href="https://github.com/hungdoansy/messy/releases"
             class="btn-primary btn-large"
           >
-            <i class="fas fa-download"></i> Tải về ngay — Miễn phí
+            <i class="fas fa-download"></i> Download now — Free
           </a>
         </div>
       </div>
@@ -330,23 +333,23 @@
     <section class="shortcuts" id="shortcuts">
       <div class="container">
         <div class="section-header">
-          <span class="section-badge">Phím tắt</span>
-          <h2>Thao tác nhanh</h2>
+          <span class="section-badge">Shortcuts</span>
+          <h2>Quick actions</h2>
         </div>
         <div class="shortcut-grid">
           <div class="shortcut-card">
             <div class="shortcut-keys">
               <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>M</kbd>
             </div>
-            <p>Mở / Ẩn cửa sổ Messenger</p>
+            <p>Show / hide the Messenger window</p>
           </div>
           <div class="shortcut-card">
             <div class="shortcut-keys"><kbd>F12</kbd></div>
-            <p>Mở Developer Tools</p>
+            <p>Open Developer Tools</p>
           </div>
           <div class="shortcut-card">
             <div class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>R</kbd></div>
-            <p>Tải lại trang</p>
+            <p>Reload the page</p>
           </div>
         </div>
       </div>
@@ -356,8 +359,8 @@
     <section class="faq" id="faq">
       <div class="container">
         <div class="section-header">
-          <span class="section-badge">Hỏi đáp</span>
-          <h2>Câu hỏi thường gặp</h2>
+          <span class="section-badge">Q&amp;A</span>
+          <h2>Frequently asked questions</h2>
         </div>
         <div class="faq-list">
           <div class="faq-item">
@@ -365,14 +368,14 @@
               class="faq-question"
               onclick="this.parentElement.classList.toggle('open')"
             >
-              Tại sao cần ứng dụng này?
+              Why do I need this app?
               <i class="fas fa-chevron-down"></i>
             </button>
             <div class="faq-answer">
               <p>
-                Không có ứng dụng Messenger đa tài khoản chính thức cho macOS.
-                Mosx đóng gói giao diện web Messenger bằng Electron, hỗ trợ cô
-                lập session, thông báo, phím tắt và System Tray.
+                There's no official multi-account Messenger app for macOS. Messy
+                wraps the Messenger web UI in Electron, adding session
+                isolation, notifications, shortcuts, and a system tray.
               </p>
             </div>
           </div>
@@ -381,14 +384,14 @@
               class="faq-question"
               onclick="this.parentElement.classList.toggle('open')"
             >
-              Có an toàn không? Tin nhắn có bị đọc?
+              Is it safe? Can my messages be read?
               <i class="fas fa-chevron-down"></i>
             </button>
             <div class="faq-answer">
               <p>
-                Hoàn toàn an toàn. Ứng dụng chỉ load trang web chính thức của
-                Facebook (messenger.com). Tin nhắn vẫn được mã hóa đầu cuối
-                E2EE. Mã nguồn mở 100% — bạn có thể tự kiểm tra.
+                Completely safe. The app only loads Facebook's official website
+                (messenger.com). Messages stay end-to-end encrypted (E2EE). It's
+                100% open source — you can inspect it yourself.
               </p>
             </div>
           </div>
@@ -397,14 +400,14 @@
               class="faq-question"
               onclick="this.parentElement.classList.toggle('open')"
             >
-              Cần cài gì trước?
+              What do I need to install first?
               <i class="fas fa-chevron-down"></i>
             </button>
             <div class="faq-answer">
               <p>
                 <a href="https://nodejs.org/" target="_blank">Node.js</a> v24+
-                và <a href="https://pnpm.io/" target="_blank">pnpm</a> v9.15+.
-                Sau đó chạy <code>pnpm install</code> và
+                and <a href="https://pnpm.io/" target="_blank">pnpm</a> v9.15+.
+                Then run <code>pnpm install</code> and
                 <code>pnpm start</code>.
               </p>
             </div>
@@ -414,14 +417,14 @@
               class="faq-question"
               onclick="this.parentElement.classList.toggle('open')"
             >
-              Làm sao để tùy biến giao diện?
+              How do I customize the look?
               <i class="fas fa-chevron-down"></i>
             </button>
             <div class="faq-answer">
               <p>
-                Chỉnh sửa file <code>custom_style.css</code>. Bạn có thể đổi màu
-                nền, độ mờ kính (backdrop-filter), hoặc ẩn/hiện bất kỳ thành
-                phần nào bằng CSS.
+                Edit the <code>custom_style.css</code> file. You can change the
+                background color, the glass blur (backdrop-filter), or show/hide
+                any element with CSS.
               </p>
             </div>
           </div>
@@ -430,13 +433,13 @@
               class="faq-question"
               onclick="this.parentElement.classList.toggle('open')"
             >
-              Hỗ trợ macOS nào?
+              Which macOS versions are supported?
               <i class="fas fa-chevron-down"></i>
             </button>
             <div class="faq-answer">
               <p>
-                macOS 12 (Monterey) trở lên. Ứng dụng chạy trên Electron
-                (Chromium) nên tương thích rộng rãi.
+                macOS 12 (Monterey) and later. The app runs on Electron
+                (Chromium), so it's broadly compatible.
               </p>
             </div>
           </div>
@@ -451,21 +454,21 @@
           <div class="footer-brand">
             <div class="footer-logo">
               <img
-                src="https://raw.githubusercontent.com/hungdoansy/mosx/main/icon.png"
+                src="https://raw.githubusercontent.com/hungdoansy/messy/main/icon.png"
                 alt=""
                 width="28"
               />
-              <span>Mosx</span>
+              <span>Messy</span>
             </div>
             <p>
-              Ứng dụng Messenger Desktop đa tài khoản cho macOS. Miễn phí & mã
-              nguồn mở.
+              A multi-account Messenger desktop app for macOS. Free & open
+              source.
             </p>
           </div>
           <div class="footer-links">
-            <h4>Liên kết</h4>
+            <h4>Links</h4>
             <a
-              href="https://github.com/hungdoansy/mosx"
+              href="https://github.com/hungdoansy/messy"
               target="_blank"
               rel="noopener"
               ><i class="fab fa-github"></i> GitHub</a
@@ -473,7 +476,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>© 2026 hungdoansy — Tạo với ❤️ cho cộng đồng.</p>
+          <p>© 2026 hungdoansy — Made with ❤️ for the community.</p>
         </div>
       </div>
     </footer>

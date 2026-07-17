@@ -1,6 +1,6 @@
-// All privileged capability comes through the vetted window.mosx bridge
+// All privileged capability comes through the vetted window.messy bridge
 // (see preload.js). This renderer has no Node access: no require, no fs,
-// no ipcRenderer. `mosx` (window.mosx) is the only channel to the main
+// no ipcRenderer. `messy` (window.messy) is the only channel to the main
 // process; it is a global created by contextBridge, used directly below.
 const profilesList = document.getElementById("profiles-list");
 const scrollUpBtn = document.getElementById("scroll-up");
@@ -15,7 +15,7 @@ try {
 
 if (profiles.length === 0) {
   profiles = [
-    { id: Date.now().toString(), name: "Nick 1", partition: "persist:nick_1" },
+    { id: Date.now().toString(), name: "Account 1", partition: "persist:nick_1" },
   ];
   saveProfiles();
 }
@@ -125,7 +125,7 @@ function renderSidebar() {
   profiles.forEach((p) => {
     const btn = document.createElement("div");
     btn.className = `profile-btn ${p.id === activeProfileId ? "active" : ""}`;
-    btn.title = p.name + " (Click phải để đổi tên/xóa)";
+    btn.title = p.name + " (Right-click to rename/delete)";
 
     const span = document.createElement("span");
     span.innerText = p.name.charAt(0).toUpperCase();
@@ -173,7 +173,7 @@ function switchProfile(id) {
   renderSidebar();
   const p = profiles.find((x) => x.id === id);
   if (p) {
-    mosx.switchProfile(p);
+    messy.switchProfile(p);
   }
 }
 
@@ -191,13 +191,11 @@ const avatarLetter = document.getElementById("avatar-letter");
 const avatarInput = document.getElementById("avatar-input");
 
 function openModal(profileToEdit = null) {
-  mosx.setBrowserViewVisibility(false);
+  messy.setBrowserViewVisibility(false);
   editingProfile = profileToEdit;
   tempAvatarPath = profileToEdit ? profileToEdit.avatar : null;
 
-  modalTitle.innerText = profileToEdit
-    ? "Chỉnh sửa tài khoản"
-    : "Thêm tài khoản";
+  modalTitle.innerText = profileToEdit ? "Edit account" : "Add account";
   nameInput.value = profileToEdit ? profileToEdit.name : "";
   document.getElementById("modal-delete").style.display = profileToEdit
     ? "block"
@@ -233,7 +231,7 @@ avatarPreview.onclick = () => avatarInput.click();
 document.getElementById("avatar-pick-label").onclick = () => avatarInput.click();
 avatarInput.onchange = (e) => {
   if (e.target.files && e.target.files[0]) {
-    tempAvatarPath = mosx.getPathForFile(e.target.files[0]);
+    tempAvatarPath = messy.getPathForFile(e.target.files[0]);
     updateAvatarPreview();
   }
 };
@@ -241,32 +239,32 @@ avatarInput.onchange = (e) => {
 document.getElementById("modal-delete").onclick = () => {
   if (!editingProfile) return;
   const action = confirm(
-    `Bạn có chắc chắn muốn XÓA tài khoản [${editingProfile.name}]?`,
+    `Are you sure you want to DELETE the account [${editingProfile.name}]?`,
   );
   if (action) {
     if (profiles.length <= 1) {
-      alert("Phải có ít nhất 1 tài khoản!");
+      alert("You must have at least 1 account!");
       return;
     }
     profiles = profiles.filter((x) => x.id !== editingProfile.id);
     saveProfiles();
-    mosx.deleteProfile(editingProfile.id);
+    messy.deleteProfile(editingProfile.id);
     if (activeProfileId === editingProfile.id) switchProfile(profiles[0].id);
     modalOverlay.style.display = "none";
     renderSidebar();
-    mosx.setBrowserViewVisibility(true);
+    messy.setBrowserViewVisibility(true);
   }
 };
 
 document.getElementById("modal-cancel").onclick = () => {
   modalOverlay.style.display = "none";
-  mosx.setBrowserViewVisibility(true);
+  messy.setBrowserViewVisibility(true);
 };
 
 document.getElementById("modal-save").onclick = () => {
   const name = nameInput.value.trim();
   if (!name) {
-    alert("Vui lòng nhập tên tài khoản!");
+    alert("Please enter an account name!");
     return;
   }
 
@@ -274,15 +272,15 @@ document.getElementById("modal-save").onclick = () => {
     editingProfile.name = name;
     editingProfile.avatar = tempAvatarPath;
   } else {
-    // Sử dụng crypto UUID để tránh trùng ID
+    // Use a crypto UUID to avoid ID collisions
     const id =
       self.crypto && self.crypto.randomUUID
         ? self.crypto.randomUUID()
         : Date.now().toString() + "_" + Math.random().toString(36).slice(2);
     const partition = `persist:nick_${id}`;
     const p = { id, name, avatar: tempAvatarPath, partition };
-    // Xóa sạch session cũ nếu tồn tại (đảm bảo không dùng cookie cũ)
-    mosx.clearNewProfileSession(partition);
+    // Wipe any existing old session (ensure old cookies aren't reused)
+    messy.clearNewProfileSession(partition);
     profiles.push(p);
     activeProfileId = id;
   }
@@ -290,40 +288,40 @@ document.getElementById("modal-save").onclick = () => {
   saveProfiles();
   modalOverlay.style.display = "none";
   renderSidebar();
-  mosx.setBrowserViewVisibility(true);
+  messy.setBrowserViewVisibility(true);
   if (!editingProfile) switchProfile(activeProfileId);
 };
 
-// ── Nút Đăng xuất & Đăng nhập lại ──
+// ── Log out & re-login button ──
 document.getElementById("modal-logout").onclick = () => {
   if (!editingProfile) return;
   const profileName = editingProfile.name;
   const action = confirm(
-    `Bạn có chắc muốn ĐĂNG XUẤT tài khoản [${profileName}]?\n\nThao tác này sẽ xóa toàn bộ cookie/session và cho phép bạn đăng nhập lại tài khoản khác.`,
+    `Are you sure you want to LOG OUT the account [${profileName}]?\n\nThis clears all cookies/session and lets you log in with a different account.`,
   );
   if (!action) return;
 
   const logoutBtn = document.getElementById("modal-logout");
   logoutBtn.classList.add("loading");
   logoutBtn.innerHTML =
-    '<svg viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Đang đăng xuất...';
+    '<svg viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Logging out...';
 
-  // Xóa avatar cache
+  // Clear avatar cache
   editingProfile.avatar = null;
   saveProfiles();
 
-  mosx.logoutProfile({
+  messy.logoutProfile({
     id: editingProfile.id,
     partition: editingProfile.partition,
   });
 };
 
-// Nhận kết quả logout
-mosx.onLogoutDone(({ id, success }) => {
+// Receive the logout result
+messy.onLogoutDone(({ id, success }) => {
   const logoutBtn = document.getElementById("modal-logout");
   if (success) {
     logoutBtn.innerHTML =
-      '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> ✅ Đã đăng xuất!';
+      '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> ✅ Logged out!';
     logoutBtn.style.color = "#51cf66";
     logoutBtn.style.borderColor = "#51cf66";
     setTimeout(() => {
@@ -332,11 +330,11 @@ mosx.onLogoutDone(({ id, success }) => {
       logoutBtn.style.color = "";
       logoutBtn.style.borderColor = "";
       renderSidebar();
-      mosx.setBrowserViewVisibility(true);
+      messy.setBrowserViewVisibility(true);
     }, 800);
   } else {
     logoutBtn.innerHTML =
-      '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> ❌ Lỗi! Thử lại';
+      '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> ❌ Error! Try again';
     logoutBtn.classList.remove("loading");
   }
 });
@@ -356,30 +354,30 @@ const toggleDarkMode = () => {
   document.getElementById("icon-moon").style.display = isDarkMode
     ? "block"
     : "none";
-  mosx.setTheme(isDarkMode);
+  messy.setTheme(isDarkMode);
 };
 document.getElementById("btn-dark-mode").onclick = toggleDarkMode;
-document.getElementById("btn-zoom-in").onclick = () => mosx.zoomIn();
-document.getElementById("btn-zoom-out").onclick = () => mosx.zoomOut();
-document.getElementById("btn-fs").onclick = () => mosx.toggleFullscreen();
+document.getElementById("btn-zoom-in").onclick = () => messy.zoomIn();
+document.getElementById("btn-zoom-out").onclick = () => messy.zoomOut();
+document.getElementById("btn-fs").onclick = () => messy.toggleFullscreen();
 document.getElementById("btn-pin").onclick = () => {
   const btn = document.getElementById("btn-pin");
   const isPinned = btn.style.opacity === "1";
   btn.style.opacity = isPinned ? "0.4" : "1";
-  mosx.toggleAlwaysOnTop();
+  messy.toggleAlwaysOnTop();
 };
-document.getElementById("btn-reload").onclick = () => mosx.reloadPage();
-document.getElementById("btn-home").onclick = () => mosx.goHome();
-document.getElementById("btn-back").onclick = () => mosx.goBack();
+document.getElementById("btn-reload").onclick = () => messy.reloadPage();
+document.getElementById("btn-home").onclick = () => messy.goHome();
+document.getElementById("btn-back").onclick = () => messy.goBack();
 document.getElementById("btn-j2team").onclick = () => {
-  mosx.openExternal(
+  messy.openExternal(
     "https://chromewebstore.google.com/detail/j2team-security/hmlcjjclebjnfohgmgikjfnbmfkigocc",
   );
 };
 
 // Lock button — click: lock, right-click: settings
 document.getElementById("btn-lock").onclick = () => {
-  const ls = mosx.getLockSettings();
+  const ls = messy.getLockSettings();
   if (ls.enabled) {
     lockApp("verify");
   } else {
@@ -396,7 +394,7 @@ document.getElementById("btn-lock").oncontextmenu = (e) => {
 // ============================================================
 let profileBadgeCounts = {};
 
-mosx.onProfileBadge(({ id, count }) => {
+messy.onProfileBadge(({ id, count }) => {
   const badge = document.getElementById(`badge-${id}`);
   if (badge) {
     badge.innerText = count > 9 ? "9+" : count;
@@ -407,10 +405,10 @@ mosx.onProfileBadge(({ id, count }) => {
     (a, b) => a + b,
     0,
   );
-  mosx.updateBadge(totalCount);
+  messy.updateBadge(totalCount);
 });
 
-mosx.onProfileAvatar(({ id, avatarUrl }) => {
+messy.onProfileAvatar(({ id, avatarUrl }) => {
   const p = profiles.find((x) => x.id === id);
   if (p) {
     const isAutoAvatar =
@@ -429,7 +427,7 @@ mosx.onProfileAvatar(({ id, avatarUrl }) => {
 // ============================================================
 //  INIT
 // ============================================================
-const settings = mosx.getSettings();
+const settings = messy.getSettings();
 isDarkMode = settings.isDarkMode;
 document.body.className = isDarkMode ? "dark-mode" : "light-mode";
 document.getElementById("icon-sun").style.display = isDarkMode
@@ -469,15 +467,15 @@ function lockApp(mode) {
   lock.setupPin = "";
   lock.isLocked = true;
   lockScreen.classList.add("active");
-  mosx.setBrowserViewVisibility(false);
+  messy.setBrowserViewVisibility(false);
   updatePinDots();
 
   if (mode === "setup") {
-    lockMessage.textContent = "Tạo mã PIN mới (4 số)";
+    lockMessage.textContent = "Create a new PIN (4 digits)";
     lockMessage.className = "lock-subtitle";
     lockDisableBtn.style.display = "none";
   } else {
-    lockMessage.textContent = "Nhập mã PIN để mở khoá";
+    lockMessage.textContent = "Enter PIN to unlock";
     lockMessage.className = "lock-subtitle";
     lockDisableBtn.style.display = "none";
   }
@@ -488,7 +486,7 @@ function unlockApp() {
   lock.enteredPin = "";
   lock.wrongAttempts = 0;
   lockScreen.classList.remove("active");
-  mosx.setBrowserViewVisibility(true);
+  messy.setBrowserViewVisibility(true);
   resetIdleTimer();
 }
 
@@ -519,19 +517,19 @@ async function handlePinComplete() {
     lock.setupPin = lock.enteredPin;
     lock.enteredPin = "";
     lock.mode = "confirm";
-    lockMessage.textContent = "Xác nhận lại mã PIN";
+    lockMessage.textContent = "Confirm your PIN";
     lockMessage.className = "lock-subtitle";
     updatePinDots();
   } else if (lock.mode === "confirm") {
     // Step 2: Confirm PIN match
     if (lock.enteredPin === lock.setupPin) {
       // Hashing happens in the main process; the hash never reaches here.
-      await mosx.setupPin(lock.enteredPin);
-      lockMessage.textContent = "✅ Đã thiết lập mã PIN!";
+      await messy.setupPin(lock.enteredPin);
+      lockMessage.textContent = "✅ PIN set!";
       lockMessage.className = "lock-subtitle success";
       setTimeout(unlockApp, 700);
     } else {
-      lockMessage.textContent = "Không khớp! Nhập lại từ đầu";
+      lockMessage.textContent = "Doesn't match! Start over";
       lockMessage.className = "lock-subtitle error";
       pinDotsContainer.classList.add("shake");
       setTimeout(() => {
@@ -539,21 +537,21 @@ async function handlePinComplete() {
         lock.mode = "setup";
         lock.enteredPin = "";
         lock.setupPin = "";
-        lockMessage.textContent = "Tạo mã PIN mới (4 số)";
+        lockMessage.textContent = "Create a new PIN (4 digits)";
         lockMessage.className = "lock-subtitle";
         updatePinDots();
       }, 600);
     }
   } else if (lock.mode === "verify") {
     // Verify PIN — comparison happens in the main process.
-    const ok = await mosx.verifyPin(lock.enteredPin);
+    const ok = await messy.verifyPin(lock.enteredPin);
     if (ok) {
-      lockMessage.textContent = "✅ Đã mở khoá!";
+      lockMessage.textContent = "✅ Unlocked!";
       lockMessage.className = "lock-subtitle success";
       setTimeout(unlockApp, 300);
     } else {
       lock.wrongAttempts++;
-      lockMessage.textContent = `Sai mã PIN! (${lock.wrongAttempts}/5)`;
+      lockMessage.textContent = `Wrong PIN! (${lock.wrongAttempts}/5)`;
       lockMessage.className = "lock-subtitle error";
       pinDotsContainer.classList.add("shake");
       lock.enteredPin = "";
@@ -563,11 +561,11 @@ async function handlePinComplete() {
       }, 500);
 
       if (lock.wrongAttempts >= 5) {
-        lockMessage.textContent = "Quá 5 lần sai. Đợi 30 giây...";
+        lockMessage.textContent = "Too many wrong attempts. Wait 30 seconds...";
         pinKeys.forEach((k) => (k.disabled = true));
         setTimeout(() => {
           lock.wrongAttempts = 0;
-          lockMessage.textContent = "Nhập mã PIN để mở khoá";
+          lockMessage.textContent = "Enter PIN to unlock";
           lockMessage.className = "lock-subtitle";
           pinKeys.forEach((k) => (k.disabled = false));
         }, 30000);
@@ -593,8 +591,8 @@ document.addEventListener("keydown", (e) => {
 
 // Lock disable button (shown in footer)
 lockDisableBtn.onclick = () => {
-  if (confirm("Bạn có chắc muốn tắt khoá ứng dụng?")) {
-    mosx.disableLock();
+  if (confirm("Are you sure you want to disable the app lock?")) {
+    messy.disableLock();
     unlockApp();
   }
 };
@@ -609,24 +607,24 @@ const lsChangePin = document.getElementById("ls-change-pin");
 const lsRemovePin = document.getElementById("ls-remove-pin");
 
 function openLockSettings() {
-  const ls = mosx.getLockSettings();
+  const ls = messy.getLockSettings();
   lsToggle.classList.toggle("on", ls.enabled);
   lsTimeout.value = String(ls.timeout || 5);
   lsChangePin.style.display = ls.enabled ? "block" : "none";
   lsRemovePin.style.display = ls.enabled ? "block" : "none";
   lockSettingsOverlay.style.display = "flex";
-  mosx.setBrowserViewVisibility(false);
+  messy.setBrowserViewVisibility(false);
 }
 
 lsToggle.onclick = () => {
-  const ls = mosx.getLockSettings();
+  const ls = messy.getLockSettings();
   if (!ls.enabled) {
     // Enable: show setup PIN
     lockSettingsOverlay.style.display = "none";
     lockApp("setup");
   } else {
     // Disable
-    mosx.disableLock();
+    messy.disableLock();
     lsToggle.classList.remove("on");
     lsChangePin.style.display = "none";
     lsRemovePin.style.display = "none";
@@ -634,7 +632,7 @@ lsToggle.onclick = () => {
 };
 
 lsTimeout.onchange = () => {
-  mosx.setLockTimeout(parseInt(lsTimeout.value));
+  messy.setLockTimeout(parseInt(lsTimeout.value));
   resetIdleTimer();
 };
 
@@ -644,17 +642,17 @@ lsChangePin.onclick = () => {
 };
 
 lsRemovePin.onclick = () => {
-  if (confirm("Xoá mã PIN? Khoá ứng dụng sẽ bị tắt.")) {
-    mosx.disableLock();
+  if (confirm("Remove PIN? The app lock will be disabled.")) {
+    messy.disableLock();
     lockSettingsOverlay.style.display = "none";
-    mosx.setBrowserViewVisibility(true);
+    messy.setBrowserViewVisibility(true);
     lsToggle.classList.remove("on");
   }
 };
 
 document.getElementById("ls-close").onclick = () => {
   lockSettingsOverlay.style.display = "none";
-  mosx.setBrowserViewVisibility(true);
+  messy.setBrowserViewVisibility(true);
 };
 
 // ============================================================
@@ -662,7 +660,7 @@ document.getElementById("ls-close").onclick = () => {
 // ============================================================
 function resetIdleTimer() {
   if (lock.idleTimer) clearTimeout(lock.idleTimer);
-  const ls = mosx.getLockSettings();
+  const ls = messy.getLockSettings();
   if (ls.enabled && ls.timeout > 0) {
     lock.idleTimer = setTimeout(
       () => {
@@ -818,19 +816,19 @@ function renderDownloads() {
       : getFileIcon(dl.filename);
     const statusText = dl.done
       ? dl.state === "completed"
-        ? "Hoàn tất"
+        ? "Completed"
         : dl.state === "cancelled"
-          ? "Đã huỷ"
-          : "Lỗi"
+          ? "Cancelled"
+          : "Error"
       : dl.state === "interrupted"
-        ? "Tạm dừng"
+        ? "Paused"
         : `${pct}%`;
     const sizeText =
       dl.total > 0
         ? `${formatBytes(dl.received)} / ${formatBytes(dl.total)}`
         : dl.received > 0
           ? formatBytes(dl.received)
-          : "Đang tải...";
+          : "Downloading...";
 
     // ── Build the row with DOM nodes (no innerHTML for data) ──
     const iconEl = document.createElement("div");
@@ -885,21 +883,21 @@ function renderDownloads() {
       actions.append(
         makeBtn(
           '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
-          "Mở file",
-          () => mosx.openDownloadFile(dl.id),
+          "Open file",
+          () => messy.openDownloadFile(dl.id),
         ),
         makeBtn(
           '<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
-          "Mở thư mục",
-          () => mosx.openDownloadFolder(dl.id),
+          "Open folder",
+          () => messy.openDownloadFolder(dl.id),
         ),
       );
     } else if (!dl.done) {
       actions.append(
         makeBtn(
           '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-          "Huỷ",
-          () => mosx.cancelDownload(dl.id),
+          "Cancel",
+          () => messy.cancelDownload(dl.id),
         ),
       );
     }
@@ -910,7 +908,7 @@ function renderDownloads() {
 }
 
 // IPC: Download events from main process
-mosx.onDownloadStarted((data) => {
+messy.onDownloadStarted((data) => {
   downloads.push({
     id: data.id,
     filename: data.filename,
@@ -926,10 +924,10 @@ mosx.onDownloadStarted((data) => {
     dlPanelOpen = true;
     dlPanel.style.display = "flex";
   }
-  showDlToast("⬇️ Bắt đầu tải:", data.filename);
+  showDlToast("⬇️ Download started:", data.filename);
 });
 
-mosx.onDownloadProgress((data) => {
+messy.onDownloadProgress((data) => {
   const dl = downloads.find((d) => d.id === data.id);
   if (dl) {
     dl.received = data.received;
@@ -950,7 +948,7 @@ mosx.onDownloadProgress((data) => {
   }
 });
 
-mosx.onDownloadDone((data) => {
+messy.onDownloadDone((data) => {
   const dl = downloads.find((d) => d.id === data.id);
   if (dl) {
     dl.done = true;
@@ -958,9 +956,9 @@ mosx.onDownloadDone((data) => {
     dl.savePath = data.savePath || dl.savePath;
     renderDownloads();
     if (data.state === "completed") {
-      showDlToast("✅ Đã tải xong:", data.filename);
+      showDlToast("✅ Downloaded:", data.filename);
     } else {
-      showDlToast("❌ Tải thất bại:", data.filename);
+      showDlToast("❌ Download failed:", data.filename);
     }
   }
 });
