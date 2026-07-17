@@ -1,0 +1,156 @@
+name: Release
+
+# Apple-Silicon-only release pipeline.
+#
+# Builds Messy for macOS arm64 on an Apple-Silicon runner, generates release
+# notes, and publishes a GitHub Release whose assets feed electron-updater
+# auto-update (the .dmg + its .blockmap + latest-mac.yml).
+#
+# Signing: signs + notarizes with a Developer ID when the signing secrets are
+# present, and otherwise falls back to an ad-hoc (locally-runnable,
+# non-distributable) build. It never fails purely for missing secrets.
+#
+# NOTE: this job commits the version bump + changelog and pushes main + a tag.
+# `main` must permit direct pushes from github-actions[bot]; if branch
+# protection blocks the push, the build will succeed but the release step will
+# fail. Add a bypass for the bot (or relax protection) before the first run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, X.Y.Z (no leading v)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14 # Apple Silicon (arm64)
+    steps:
+      - name: Validate version and compute tag
+        id: meta
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must be X.Y.Z (got '$VERSION')"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure tag does not already exist
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::tag $TAG already exists"
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Set package version
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Generate release notes
+        id: changelog
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: node .github/scripts/generate-changelog.js
+
+      - name: Determine signing mode
+        id: signmode
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+        run: |
+          if [ -n "$CSC_LINK" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No CSC_LINK secret — building ad-hoc (not distributable, no auto-update)."
+          fi
+
+      - name: Decode notarization key
+        id: notarize
+        if: steps.signmode.outputs.signed == 'true'
+        env:
+          APPLE_API_KEY_B64: ${{ secrets.APPLE_API_KEY }}
+        run: |
+          if [ -n "$APPLE_API_KEY_B64" ]; then
+            KEY_PATH="$RUNNER_TEMP/apple_api_key.p8"
+            printf '%s' "$APPLE_API_KEY_B64" | base64 --decode > "$KEY_PATH"
+            echo "key_path=$KEY_PATH" >> "$GITHUB_OUTPUT"
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::CSC_LINK present but APPLE_API_KEY missing — signing without notarization."
+          fi
+
+      - name: Build (signed + notarized)
+        if: steps.signmode.outputs.signed == 'true'
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # electron-builder expects APPLE_API_KEY to be a path to the .p8 file.
+          APPLE_API_KEY: ${{ steps.notarize.outputs.key_path }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: npx electron-builder --mac dmg --arm64 --publish never -c.mac.notarize=${{ steps.notarize.outputs.enabled }}
+
+      - name: Build (ad-hoc, unsigned)
+        if: steps.signmode.outputs.signed == 'false'
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npx electron-builder --mac dmg --arm64 --publish never
+
+      - name: Prepend release to CHANGELOG.md
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          NOTES: ${{ steps.changelog.outputs.text }}
+        run: node .github/scripts/prepend-changelog.js
+
+      - name: Commit, tag, and push
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "release: $TAG"
+          git tag -m "$TAG" "$TAG"
+          git push origin HEAD:main
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          body: ${{ steps.changelog.outputs.text }}
+          # electron-updater feed: the dmg, its blockmap, AND latest-mac.yml.
+          files: |
+            dist/*-arm64.dmg
+            dist/*-arm64.dmg.blockmap
+            dist/latest-mac.yml
+          fail_on_unmatched_files: true
