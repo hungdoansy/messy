@@ -886,10 +886,6 @@ function createWindow() {
     });
   }
 
-  mainWindow.on("focus", () => {
-    mainWindow.flashFrame(false);
-  });
-
   mainWindow.on("resize", updateBrowserViewBounds);
   mainWindow.on("maximize", updateBrowserViewBounds);
   mainWindow.on("unmaximize", updateBrowserViewBounds);
@@ -1021,12 +1017,8 @@ function createWindow() {
 
   ipcMain.on("update-badge", (event, count) => {
     if (count !== unreadCount) {
-      const hadNewMessages = count > unreadCount;
       unreadCount = count;
       updateBadge(unreadCount);
-      if (hadNewMessages && !mainWindow.isFocused()) {
-        mainWindow.flashFrame(true);
-      }
     }
   });
 
