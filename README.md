@@ -56,6 +56,14 @@ File thành phẩm: `dist/Mosx-<version>-arm64.dmg`.
 `build/entitlements.mac.plist` và siết các Electron fuses trong
 `package.json` (`electronFuses`).
 
+> **Lưu ý (Apple Silicon):** việc siết Electron fuses sẽ **sửa đổi** binary
+> `Electron Framework`, làm **vô hiệu chữ ký** có sẵn. Trên chip Apple M +
+> hardened runtime, chạy binary có chữ ký không khớp sẽ bị macOS kill ngay
+> (`EXC_BAD_ACCESS / Code Signature Invalid`). Vì vậy fuse
+> `resetAdHocDarwinSignature: true` được bật để **ký lại ad-hoc ngay sau khi
+> flip fuses**, giúp bản build không ký (dev) vẫn chạy được. Khi ký bằng
+> Developer ID thật, electron-builder sẽ ký đè lên chữ ký ad-hoc này.
+
 ## Cấu trúc dự án
 
 | File               | Chức năng                                             |

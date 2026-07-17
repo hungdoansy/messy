@@ -33,6 +33,7 @@
       "notarize": false
     },
     "electronFuses": {
+      "resetAdHocDarwinSignature": true,
       "runAsNode": false,
       "enableCookieEncryption": true,
       "enableNodeOptionsEnvironmentVariable": false,
