@@ -6,7 +6,7 @@
 const {
   app,
   BrowserWindow,
-  BrowserView,
+  WebContentsView,
   shell,
   session,
   Menu,
@@ -201,7 +201,8 @@ let settings = loadSettings();
 let isQuitting = false;
 let unreadCount = 0;
 
-let browserViews = {}; // { profileId: BrowserView }
+let browserViews = {}; // { profileId: WebContentsView }
+let attachedView = null; // the WebContentsView currently shown
 let activeProfileId = null;
 
 // ============================================================
@@ -400,8 +401,49 @@ function toggleAutoLaunch(enable) {
 }
 
 // ============================================================
-//  QUẢN LÝ BROWSERVIEW
+//  QUẢN LÝ VIEW (WebContentsView)
 // ============================================================
+// The window shows at most one Messenger view at a time, layered over the
+// shell (index.html) which renders the sidebars. showView swaps the attached
+// child view; contentView.addChildView replaces the old setBrowserView API.
+function showView(view) {
+  if (!mainWindow) return;
+  if (view) {
+    if (attachedView && attachedView !== view) {
+      try {
+        mainWindow.contentView.removeChildView(attachedView);
+      } catch {}
+    }
+    if (attachedView !== view) {
+      mainWindow.contentView.addChildView(view);
+      attachedView = view;
+    }
+    updateBrowserViewBounds();
+  } else if (attachedView) {
+    try {
+      mainWindow.contentView.removeChildView(attachedView);
+    } catch {}
+    attachedView = null;
+  }
+}
+
+function detachView(view) {
+  if (attachedView === view) {
+    try {
+      mainWindow.contentView.removeChildView(view);
+    } catch {}
+    attachedView = null;
+  }
+}
+
+function destroyViewContents(view) {
+  try {
+    const wc = view.webContents;
+    if (typeof wc.destroy === "function") wc.destroy();
+    else wc.close();
+  } catch {}
+}
+
 function updateBrowserViewBounds() {
   if (!mainWindow || !activeProfileId || !browserViews[activeProfileId]) return;
   const bounds = mainWindow.getContentBounds();
@@ -848,7 +890,7 @@ function createWindow() {
   ipcMain.on("switch-profile", (event, profile) => {
     activeProfileId = profile.id;
     if (!browserViews[profile.id]) {
-      const view = new BrowserView({
+      const view = new WebContentsView({
         webPreferences: {
           // Untrusted Messenger content: no preload, no Node, sandboxed,
           // isolated per-profile partition.
@@ -862,20 +904,17 @@ function createWindow() {
       setupWebContents(view.webContents, profile.id);
       view.webContents.loadURL(MESSENGER_URL, { userAgent: USER_AGENT });
     }
-    mainWindow.setBrowserView(browserViews[profile.id]);
-    updateBrowserViewBounds();
+    showView(browserViews[profile.id]);
   });
 
   // ── Đăng xuất / Xóa session cho 1 profile ──
   ipcMain.on("logout-profile", async (event, profileData) => {
     const { id, partition } = profileData;
     try {
-      // 1. Destroy BrowserView nếu đang tồn tại
+      // 1. Destroy view nếu đang tồn tại
       if (browserViews[id]) {
-        if (mainWindow && mainWindow.getBrowserView() === browserViews[id]) {
-          mainWindow.setBrowserView(null);
-        }
-        browserViews[id].webContents.destroy();
+        detachView(browserViews[id]);
+        destroyViewContents(browserViews[id]);
         delete browserViews[id];
       }
 
@@ -896,8 +935,8 @@ function createWindow() {
       await sess.clearCache();
       await sess.clearAuthCache();
 
-      // 3. Tạo lại BrowserView mới với session sạch
-      const view = new BrowserView({
+      // 3. Tạo lại view mới với session sạch
+      const view = new WebContentsView({
         webPreferences: {
           // Untrusted Messenger content: no preload, no Node, sandboxed.
           partition: partition,
@@ -912,8 +951,7 @@ function createWindow() {
 
       // 4. Hiển thị lại
       if (activeProfileId === id) {
-        mainWindow.setBrowserView(view);
-        updateBrowserViewBounds();
+        showView(view);
       }
 
       event.reply("logout-profile-done", { id, success: true });
@@ -949,16 +987,16 @@ function createWindow() {
   ipcMain.on("set-browserview-visibility", (event, visible) => {
     if (!mainWindow) return;
     if (visible && activeProfileId && browserViews[activeProfileId]) {
-      mainWindow.setBrowserView(browserViews[activeProfileId]);
-      updateBrowserViewBounds();
+      showView(browserViews[activeProfileId]);
     } else {
-      mainWindow.setBrowserView(null);
+      showView(null);
     }
   });
 
   ipcMain.on("delete-profile", (event, id) => {
     if (browserViews[id]) {
-      browserViews[id].webContents.destroy();
+      detachView(browserViews[id]);
+      destroyViewContents(browserViews[id]);
       delete browserViews[id];
     }
   });

@@ -8,7 +8,7 @@
 //  Secrets (e.g. the app-lock PIN hash) never cross this bridge:
 //  PIN hashing/verification happens in the main process.
 // ============================================================
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 // Fire-and-forget send (renderer -> main). Channels are fixed below.
 const send = (channel, ...args) => ipcRenderer.send(channel, ...args);
@@ -46,6 +46,9 @@ contextBridge.exposeInMainWorld("mosx", {
 
   // ── External links (scheme/host validated in main) ──
   openExternal: (url) => send("open-external", url),
+
+  // ── Resolve a picked File's local path (replaces removed File.path) ──
+  getPathForFile: (file) => webUtils.getPathForFile(file),
 
   // ── Settings (synchronous reads; contain NO secrets) ──
   getSettings: () => ipcRenderer.sendSync("get-settings"),

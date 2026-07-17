@@ -16,11 +16,29 @@
     },
     "mac": {
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
       ],
       "icon": "icon.icns",
       "category": "public.app-category.social-networking",
-      "artifactName": "Mosx-${version}-mac.${ext}"
+      "artifactName": "Mosx-${version}-arm64.${ext}",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": false
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
     },
     "files": [
       "main.js",
@@ -52,8 +70,8 @@
   "author": "hungdoansy",
   "license": "MIT",
   "devDependencies": {
-    "electron": "29.4.6",
-    "electron-builder": "24.13.3"
+    "electron": "43.1.1",
+    "electron-builder": "26.15.3"
   },
   "dependencies": {
     "electron-updater": "6.8.4"

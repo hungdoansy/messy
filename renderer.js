@@ -233,7 +233,7 @@ avatarPreview.onclick = () => avatarInput.click();
 document.getElementById("avatar-pick-label").onclick = () => avatarInput.click();
 avatarInput.onchange = (e) => {
   if (e.target.files && e.target.files[0]) {
-    tempAvatarPath = e.target.files[0].path;
+    tempAvatarPath = mosx.getPathForFile(e.target.files[0]);
     updateAvatarPreview();
   }
 };

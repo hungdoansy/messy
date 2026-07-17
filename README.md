@@ -30,23 +30,37 @@ pnpm install
 pnpm start
 ```
 
-## Build (macOS)
+## Build (macOS — Apple Silicon)
+
+Build nhắm tới macOS **arm64** (chip Apple M).
 
 ```bash
-# Tạo file .dmg
-pnpm run build
-
-# Hoặc chỉ build dmg
-pnpm run build:dmg
+pnpm run build      # tạo file .dmg trong dist/
 ```
 
-File thành phẩm xuất hiện trong thư mục `dist/`.
+File thành phẩm: `dist/Mosx-<version>-arm64.dmg`.
+
+### Ký & công chứng (Code Signing & Notarization)
+
+Để phân phối ra ngoài máy dev cần tài khoản Apple Developer:
+
+- Cài chứng chỉ **Developer ID Application** vào Keychain.
+- Đặt `notarize: true` trong `package.json` (mục `build.mac`) và cung cấp
+  thông tin qua biến môi trường (App Store Connect API key):
+  `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`.
+- Không có chứng chỉ, build vẫn chạy cục bộ (ad-hoc signing) — đặt
+  `CSC_IDENTITY_AUTO_DISCOVERY=false` — nhưng **không** thể phân phối hay
+  tự động cập nhật. Auto-update chỉ áp dụng cho bản build đã ký hợp lệ.
+
+Ứng dụng bật **hardened runtime** với entitlements ở
+`build/entitlements.mac.plist` và siết các Electron fuses trong
+`package.json` (`electronFuses`).
 
 ## Cấu trúc dự án
 
 | File               | Chức năng                                             |
 | ------------------ | ----------------------------------------------------- |
-| `main.js`          | Quản lý vòng đời App, Partitions, BrowserView, IPC.   |
+| `main.js`          | Quản lý vòng đời App, Partitions, WebContentsView, IPC. |
 | `renderer.js`      | Logic Sidebar đa tài khoản, Modal UI.                 |
 | `index.html`       | Sidebar trái (nick) & Sidebar phải (công cụ) & Modal. |
 | `preload.js`       | Cầu nối bảo mật giữa DOM và Backend.                  |
