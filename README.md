@@ -33,6 +33,26 @@ author for the upstream project.
 - **App lock (PIN)** — Protect the app with a PIN.
 - **Dark/Light mode** — Switch between themes.
 
+## Installation
+
+1. Download the latest release `.dmg` from the
+   [Releases page](https://github.com/hungdoansy/messy/releases/latest).
+2. (Optional) Verify the download's checksum against the value published on
+   the release page:
+   ```bash
+   shasum -a 256 Messy-*.dmg
+   ```
+3. Open the `.dmg` and run the installer inside it.
+4. Drag **Messy.app** into your `/Applications` folder.
+5. Since the app isn't notarized by default, macOS Gatekeeper will quarantine
+   it. Clear the quarantine attribute so it can run:
+   ```bash
+   xattr -cr /Applications/Messy.app
+   ```
+6. Right-click **Messy.app** in Finder and choose **Open**, then confirm in
+   the dialog. This one-time step lets Gatekeeper allow the unsigned build to
+   launch — subsequent launches work normally (double-click).
+
 ## Requirements
 
 - **macOS on Apple Silicon (Apple M chips)** — Messy builds and ships for `arm64` only.
