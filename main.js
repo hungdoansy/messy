@@ -731,52 +731,78 @@ function setupWebContents(contents, profileId) {
     } catch (e) {}
   });
 
+  // Facebook renders a friend's avatar with exactly the same <svg><image> markup
+  // as our own, so "find the first avatar-sized fbcdn image" picks whichever
+  // happens to come first in the DOM — usually a conversation in the thread
+  // list. Every candidate below must therefore be anchored to the uid we read
+  // from the c_user cookie, which is the only authoritative signal for which
+  // account this view is logged into.
+  const ownAvatarScript = (uid) => `
+    (function() {
+      var uid = ${JSON.stringify(uid)};
+      function srcOf(el) {
+        return el.getAttribute('xlink:href') || el.getAttribute('href') || el.src || '';
+      }
+      function isCdn(u) {
+        return !!u && (u.indexOf('scontent') !== -1 || u.indexOf('fbcdn') !== -1);
+      }
+      // Avatars sitting inside a link that resolves to our own profile.
+      var selfLinks = document.querySelectorAll(
+        'a[href*="/me/"], a[href*="profile.php?id=' + uid + '"], a[href$="/' + uid + '"], a[href*="/' + uid + '/"]'
+      );
+      for (var i = 0; i < selfLinks.length; i++) {
+        var candidates = selfLinks[i].querySelectorAll('svg image, img');
+        for (var j = 0; j < candidates.length; j++) {
+          var u = srcOf(candidates[j]);
+          if (isCdn(u)) return u;
+        }
+      }
+      // Weaker but still uid-anchored: an avatar whose CDN url carries our uid.
+      var all = document.querySelectorAll('svg image, img');
+      for (var k = 0; k < all.length; k++) {
+        var au = srcOf(all[k]);
+        if (isCdn(au) && au.indexOf(uid) !== -1) return au;
+      }
+      return null;
+    })();
+  `;
+
+  // Attempts are only counted once we know the account is logged in, so a view
+  // that starts at the login screen keeps waiting instead of giving up.
+  let avatarAttempts = 0;
+  const AVATAR_MAX_ATTEMPTS = 12;
   const avatarInterval = setInterval(async () => {
     if (contents.isDestroyed()) {
       clearInterval(avatarInterval);
       return;
     }
-    const avatarScript = `
-      (function() {
-        let nav = document.querySelector('div[role="navigation"]');
-        if (nav) {
-          let images = nav.querySelectorAll('svg image');
-          for (let img of images) {
-            let href = img.getAttribute('xlink:href') || img.getAttribute('href');
-            if (href && (href.includes('scontent') || href.includes('fbcdn'))) return href;
-          }
-        }
-        let images = document.querySelectorAll('svg image');
-        for (let img of images) {
-          let href = img.getAttribute('xlink:href') || img.getAttribute('href');
-          if (href && (href.includes('scontent') || href.includes('fbcdn'))) return href;
-        }
-        let imgs = document.querySelectorAll('img');
-        for (let img of imgs) {
-          if (img.src && (img.src.includes('scontent') || img.src.includes('fbcdn')) && img.width > 20 && img.width < 100) return img.src;
-        }
-        return null;
-      })();
-    `;
     try {
-      const avatarUrl = await contents.executeJavaScript(avatarScript);
-      if (avatarUrl && mainWindow && profileId) {
+      const cookies = await contents.session.cookies.get({ name: "c_user" });
+      const rawUid = cookies && cookies.length > 0 ? cookies[0].value : null;
+      // c_user is a numeric id; the uid is interpolated into a CSS selector and
+      // a url, so anything else is discarded rather than passed through.
+      const uid = rawUid && /^[0-9]+$/.test(rawUid) ? rawUid : null;
+      if (!uid) return;
+      avatarAttempts++;
+
+      const ownAvatar = await contents.executeJavaScript(ownAvatarScript(uid));
+      // Derived from our uid, so it can never resolve to a friend.
+      const avatarUrl =
+        ownAvatar ||
+        `https://graph.facebook.com/${uid}/picture?width=150&height=150`;
+
+      if (mainWindow && !mainWindow.isDestroyed() && profileId) {
         mainWindow.webContents.send("update-profile-avatar", {
           id: profileId,
           avatarUrl,
         });
-      } else {
-        const cookies = await contents.session.cookies.get({ name: "c_user" });
-        if (cookies && cookies.length > 0) {
-          const uid = cookies[0].value;
-          const fbAvatar = `https://graph.facebook.com/${uid}/picture?width=150&height=150`;
-          if (mainWindow && profileId) {
-            mainWindow.webContents.send("update-profile-avatar", {
-              id: profileId,
-              avatarUrl: fbAvatar,
-            });
-          }
-        }
+      }
+
+      // Stop once we have the rendered avatar, or once the page has had long
+      // enough to render it. Polling forever is what previously let a later
+      // scrape overwrite a correct avatar every time the DOM shifted.
+      if (ownAvatar || avatarAttempts >= AVATAR_MAX_ATTEMPTS) {
+        clearInterval(avatarInterval);
       }
     } catch (e) {}
   }, 5000);
