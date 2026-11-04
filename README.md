@@ -114,12 +114,19 @@ The workflow signs **and** notarizes when the signing secrets are present, and
 otherwise falls back to an ad-hoc (locally-runnable, non-distributable) build —
 it never fails purely for missing secrets.
 
-**Repository secrets** (add under **Settings → Secrets and variables →
-Actions**):
+Tick **Dry run** to test the pipeline: it builds and shows what it would
+publish, but pushes nothing. The changelog, tag and GitHub Release steps come
+from
+[`hungdoansy/desktop-release-actions`](https://github.com/hungdoansy/desktop-release-actions).
+
+**Secrets.** The release job runs in the `Production` environment, so it reads
+secrets from that environment (**Settings → Environments → Production**) and
+from the repository (**Settings → Secrets and variables → Actions**).
+`GEMINI_API_KEY` is in `Production`.
 
 | Secret | Purpose | Required for |
 | ------ | ------- | ------------ |
-| `GEMINI_API_KEY`     | Rewrites the commit log into user-facing release notes. Omit to fall back to a raw commit list. | Nicer changelog (optional) |
+| `GEMINI_API_KEY`     | Rewrites the commit log into user-facing release notes. Omit to fall back to a raw commit list. If the key is set and the Gemini call fails, the release stops before anything builds. | Nicer changelog (optional) |
 | `CSC_LINK`           | Base64-encoded Developer ID Application certificate (`.p12`). | Signed release |
 | `CSC_KEY_PASSWORD`   | Password for the `.p12` certificate. | Signed release |
 | `APPLE_API_KEY`      | Base64-encoded App Store Connect API key (`.p8`); the workflow decodes it to a file. | Notarization |
