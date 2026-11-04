@@ -9,7 +9,9 @@
 //
 //  Behavior:
 //   - No prior v* tag  → use the last 20 commits.
-//   - `release:` / `docs:` commits are dropped.
+//   - `release:`, `docs:`, `test:`, `chore:`, `ci:`, `build:`, `style:`
+//     and `refactor:` commits are dropped.
+//   - Trailing `(#123)` PR suffixes are stripped from subjects.
 //   - GEMINI_API_KEY missing OR the API call fails → fall back to
 //     the raw bullet list and still exit 0 (never fail the release).
 //   - Writes the result to $GITHUB_OUTPUT under `text`, and a
@@ -31,9 +33,16 @@ function stripConventionalPrefix(subject) {
     .trim();
 }
 
+// Strip a trailing PR reference: `... (#123)`.
+function stripPrSuffix(subject) {
+  return String(subject)
+    .replace(/\s*\(#\d+\)\s*$/, "")
+    .trim();
+}
+
 // Commits that should never appear in user-facing notes.
 function isNoiseCommit(subject) {
-  return /^\s*(release|docs)(\([^)]*\))?!?:/i.test(String(subject));
+  return /^\s*(release|docs|test|chore|ci|build|style|refactor)(\([^)]*\))?!?:/i.test(String(subject));
 }
 
 // Turn raw commit subjects into a markdown bullet list.
@@ -43,6 +52,7 @@ function toBullets(subjects) {
     .filter(Boolean)
     .filter((s) => !isNoiseCommit(s))
     .map(stripConventionalPrefix)
+    .map(stripPrSuffix)
     .filter(Boolean)
     .map((s) => `- ${s}`)
     .join("\n");
@@ -139,6 +149,7 @@ async function main() {
 
 module.exports = {
   stripConventionalPrefix,
+  stripPrSuffix,
   isNoiseCommit,
   toBullets,
   latestVersionTag,

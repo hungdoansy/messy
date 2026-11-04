@@ -9,6 +9,7 @@ const { join } = require("node:path");
 
 const {
   stripConventionalPrefix,
+  stripPrSuffix,
   isNoiseCommit,
   toBullets,
   polishWithGemini,
@@ -23,11 +24,33 @@ test("stripConventionalPrefix removes type/scope/bang prefixes", () => {
   assert.equal(stripConventionalPrefix("Bump Electron to 43"), "Bump Electron to 43");
 });
 
-test("isNoiseCommit flags release/docs commits only", () => {
-  assert.equal(isNoiseCommit("release: v1.4.0"), true);
-  assert.equal(isNoiseCommit("docs(readme): tidy"), true);
+test("stripPrSuffix removes only a trailing (#123)", () => {
+  assert.equal(stripPrSuffix("stop dock icon bouncing (#1)"), "stop dock icon bouncing");
+  assert.equal(stripPrSuffix("add login (#1234)  "), "add login");
+  // No suffix → unchanged.
+  assert.equal(stripPrSuffix("add login"), "add login");
+  // Mid-subject references and non-PR parentheses stay.
+  assert.equal(stripPrSuffix("revert (#12) and retry"), "revert (#12) and retry");
+  assert.equal(stripPrSuffix("add login (beta)"), "add login (beta)");
+});
+
+test("isNoiseCommit flags internal commit types", () => {
+  for (const type of ["release", "docs", "test", "chore", "ci", "build", "style", "refactor"]) {
+    assert.equal(isNoiseCommit(`${type}: tidy`), true, `${type}:`);
+    assert.equal(isNoiseCommit(`${type}(scope): tidy`), true, `${type}(scope):`);
+    assert.equal(isNoiseCommit(`${type}!: tidy`), true, `${type}!:`);
+    assert.equal(isNoiseCommit(`${type}(scope)!: tidy`), true, `${type}(scope)!:`);
+  }
+});
+
+test("isNoiseCommit keeps user-facing and unprefixed commits", () => {
   assert.equal(isNoiseCommit("feat: real change"), false);
   assert.equal(isNoiseCommit("fix: real change"), false);
+  assert.equal(isNoiseCommit("perf: faster startup"), false);
+  // Noise words only count as a prefix type.
+  assert.equal(isNoiseCommit("Build the new sidebar"), false);
+  assert.equal(isNoiseCommit("fix: test: flaky login"), false);
+  assert.equal(isNoiseCommit("testing: real change"), false);
 });
 
 test("toBullets: happy path — one bullet per non-noise commit, prefixes stripped", () => {
@@ -35,9 +58,30 @@ test("toBullets: happy path — one bullet per non-noise commit, prefixes stripp
   assert.equal(toBullets(subjects), "- add multi-account\n- unlock edge case");
 });
 
-test("toBullets: excludes release:/docs: and drops empties", () => {
-  const subjects = ["feat: keep me", "release: v1.0.0", "docs: tidy", "", "   "];
+test("toBullets: excludes noise commits and drops empties", () => {
+  const subjects = [
+    "feat: keep me",
+    "release: v1.0.0",
+    "docs: tidy",
+    "chore(package): update pnpm version",
+    "test: cover edge case",
+    "ci: pin action",
+    "build: bump electron-builder",
+    "style: format",
+    "refactor!: drop legacy path",
+    "",
+    "   ",
+  ];
   assert.equal(toBullets(subjects), "- keep me");
+});
+
+test("toBullets: strips trailing PR suffixes", () => {
+  const subjects = ["fix(macos): stop dock icon bouncing (#1)", "Bump Electron to 43 (#22)"];
+  assert.equal(toBullets(subjects), "- stop dock icon bouncing\n- Bump Electron to 43");
+});
+
+test("toBullets: drops a subject that is only a PR suffix", () => {
+  assert.equal(toBullets(["feat: keep me", "fix: (#7)"]), "- keep me");
 });
 
 test("polishWithGemini: no API key → raw list, no throw", async () => {
