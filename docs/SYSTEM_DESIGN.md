@@ -26,11 +26,10 @@ messy/
 ├── index.html       # The shell UI (sidebars, modals, lock screen, CSP meta)
 ├── renderer.js      # Shell UI logic (profiles, lock screen, download panel)
 ├── custom_style.css # CSS injected INTO the Messenger views (hide banner etc.)
-├── test/            # node --test suites (trust, changelog scripts)
+├── test/            # node --test suite (trust)
 ├── build/entitlements.mac.plist
 ├── .github/
-│   ├── workflows/release.yml       # arm64 build + GitHub Release
-│   └── scripts/generate-changelog.js, prepend-changelog.js
+│   └── workflows/release.yml       # arm64 build + GitHub Release
 └── docs/            # landing page (index.html) + plans/
 ```
 
@@ -172,7 +171,7 @@ Tray icon with context menu (reload, launch-at-login, minimize-to-tray, block-se
 ## 8. Updates & release pipeline
 
 - **In-app**: `electron-updater` against GitHub Releases (`latest-mac.yml` + `.dmg` + blockmap). Checks 5 s after startup and on demand from the tray; `autoDownload: false` — the user confirms download and install via native dialogs. (Auto-update only actually works on signed builds.)
-- **CI** (`.github/workflows/release.yml`): manual dispatch with a version input → validate semver + tag-collision check → `pnpm install --frozen-lockfile` → **run tests** → `npm version` → generate release notes with `generate-changelog.js` (commit subjects since the last `v*` tag, conventional-commit prefixes stripped, optionally rewritten into user-facing notes by the Gemini API — with a raw-bullet fallback so a missing key/failed call never fails the release) → build.
+- **CI** (`.github/workflows/release.yml`): manual dispatch with a version input → `pnpm install --frozen-lockfile` → validate semver + tag-collision check and generate release notes with the shared `validate-and-draft-notes` action from `hungdoansy/desktop-release-actions` (commit subjects since the last `v*` tag, conventional-commit prefixes stripped, optionally rewritten into user-facing notes by the Gemini API — with a raw-bullet fallback so a missing key/failed call never fails the release) → **run tests** → `npm version` → build.
 - **Signing is best-effort by design**: with `CSC_LINK`/notarization secrets present it produces a signed, notarized, auto-updatable build; without them it falls back to an **ad-hoc** build (runnable locally, not distributable) rather than failing. Locally, `electron-builder.env` pins `CSC_IDENTITY_AUTO_DISCOVERY=false` so `pnpm run build` works on machines without a Developer ID.
 - The workflow commits the version bump + prepended `CHANGELOG.md` and pushes `main` + the tag (documented caveat: branch protection must allow the bot).
 - The unsigned distribution reality is documented in the README: users must `xattr -cr` and right-click-open once (Gatekeeper).
@@ -182,9 +181,8 @@ Tray icon with context menu (reload, launch-at-login, minimize-to-tray, block-se
 `node --test` (zero test dependencies), targeting the pure seams on purpose:
 
 - `test/trust.test.js` — the security-critical allowlists, including bypass shapes (`evil.com/facebook.com`, lookalike hosts, non-https).
-- `test/generate-changelog.test.js`, `test/prepend-changelog.test.js` — the release-notes helpers (exported pure functions; requiring the module doesn't run the CLI flow).
 
-The Electron-bound majority of `main.js` is not unit-tested; the tested surface is exactly the part where a silent regression would be a security hole (trust.js) or a broken release (changelog scripts). CI runs the suite before every release build.
+The Electron-bound majority of `main.js` is not unit-tested; the tested surface is exactly the part where a silent regression would be a security hole (trust.js). The release-notes and changelog helpers are tested in `hungdoansy/desktop-release-actions`. CI runs the suite before every release build.
 
 ## 10. Design decisions & trade-offs (summary)
 
@@ -216,4 +214,4 @@ The Electron-bound majority of `main.js` is not unit-tested; the tested surface 
 | Shell UI (profiles, lock, downloads) | `renderer.js`, `index.html` |
 | Messenger de-chroming CSS | `custom_style.css` |
 | Fuses, entitlements, builder config | `package.json` (`build` key), `build/entitlements.mac.plist` |
-| Release pipeline + notes generation | `.github/workflows/release.yml`, `.github/scripts/` |
+| Release pipeline + notes generation | `.github/workflows/release.yml`, `hungdoansy/desktop-release-actions` |
